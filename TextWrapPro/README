@@ -1,0 +1,29 @@
+This directory contains TextWrapPro, a plugin and concept for Minecraft and Bukkit. 
+
+Files:
+    ArrayExamples.java      - Examples and easy to copy code for this word wrapping technique using arrays.
+    HashMapExample.java     - Example and easy to copy code for this word wrapping technique using a HashMap.
+    PixelWidth.xls          - Core excel document outlining the facts. ASCII#, ID, X, Y, CHAR, PIXELS.
+    characters.txt          - Each character on a new line, in order of ASCII and the minecraft font image.
+    combined.txt            - characters.txt and width.txt combined and displayed on a new line each. character=>width.
+    font_alphaBG.png        - Minecraft font image, with alpha (transparency).
+    font_blackBG.png        - Minecraft font image, with black.
+    width.txt               - Each width in pixels on a new line, in order of ASCII and the minecraft font image.
+    width_backup.txt        - Pre +1 setup. No longer used. More info in the file.
+    
+Other:
+    src/                    - TextWrapPro plugin source.
+
+
+Note:
+ALL my plugins use the WTFPL. This means YOU can use my SOURCE however you want.
+Copy it, sell it, roll it up and smoke it! Just so long as you're having fun :)
+
+
+--------
+
+TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+
+0. You just DO WHAT THE FUCK YOU WANT TO.
+
+
