@@ -353,6 +353,7 @@ public class MCDocsListener implements Listener {
         	lines.clear();
         	fixedLines.clear();
         	String command = r.getCommand();
+        	String cleanCommand = command.replaceFirst("/", "");
         	int page = 0;
         	String permission = "allow";
         	
@@ -368,7 +369,7 @@ public class MCDocsListener implements Listener {
     			
     			//Bukkit Permissions
 				if(!MCDocs.permission.has(player, "mcdocs.*")){
-					if(!MCDocs.permission.has(player, "mcdocs.command." + command)){
+					if((!MCDocs.permission.has(player, "mcdocs.command." + command)) && (!MCDocs.permission.has(player, "mcdocs.command." + cleanCommand))){
 						permission = "deny";
 					}
 				}
@@ -481,7 +482,12 @@ public class MCDocsListener implements Listener {
         	
         	//iConomy
     		if(MCDocs.economyEnabled){
-    			fixedLine = fixedLine.replace("%balance", Double.toString(MCDocs.economy.getBalance(player.toString())));
+    			try{
+    				fixedLine = fixedLine.replace("%balance", Double.toString(MCDocs.economy.getBalance(player.toString())));
+    			}
+    			catch(Exception e){
+    				logit("Warning: Vault could not find " + player.getName() + "'s balance.");
+    			}
     		}
                         
             
@@ -577,11 +583,24 @@ public class MCDocsListener implements Listener {
 	
 	private String[] getGroupInfo(Player player){
 		
-		String group = MCDocs.permission.getPrimaryGroup(player);
+		String group = "";
 		String prefix = "";
 		String suffix = "";
-		prefix = MCDocs.chat.getPlayerPrefix(player);
-		suffix = MCDocs.chat.getPlayerSuffix(player);
+		
+		try{
+			group = MCDocs.permission.getPrimaryGroup(player);
+		}
+		catch(Exception e){
+			logit("Warning: Vault could not find " + player.getName() + "'s group.");
+		}
+		
+		try{
+			prefix = MCDocs.chat.getPlayerPrefix(player);
+			suffix = MCDocs.chat.getPlayerSuffix(player);
+		}
+		catch(Exception e){
+			logit("Warning: Vault could not find " + player.getName() + "'s prefix or suffix.");
+		}
 				
 		String[] ret = {group, prefix, suffix};
 		return ret;
