@@ -70,7 +70,7 @@ public class MCDocsListener implements Listener {
 	private ArrayList<MCDocsOnlineFiles> onlineFiles = new ArrayList<MCDocsOnlineFiles>();
 	
 	//Configuration Defaults
-	private String headerFormat = "&c%commandname - Page %current of %count &f| &7%command <page>";
+	private String headerFormat = "[color=red][b]%commandname[/b][/color] | [color=yellow]Page %current of %count[/color] | [color=gray]%command <page>[/color]";
 	private String onlinePlayersFormat = "%prefix%name";
 	private String newsFile = "news.txt";
 	private int newsLines = 1;
@@ -168,7 +168,7 @@ public class MCDocsListener implements Listener {
 				stream.println("        Admin: '%prefix%group%suffix (%prefix%name%suffix) has left the server. You can relax.'");
 				stream.println();
 				stream.println("#This changes the pagination header that is added to MCDocs automatically when there is > 10 lines of text.");
-				stream.println("header-format: '&c%commandname - Page %current of %count &f| &7%command <page>'");
+				stream.println("header-format: '[color=red][b]%commandname[/b][/color] | [color=yellow]Page %current of %count[/color] | [color=gray]%command <page>[/color]'");
 				stream.println();
 				stream.println("#Format to use when using %online or %online_group.");
 				stream.println("online-players-format: '%prefix%name'");
@@ -354,6 +354,7 @@ public class MCDocsListener implements Listener {
         	fixedLines.clear();
         	String command = r.getCommand();
         	String cleanCommand = command.replaceFirst("/", "");
+        	cleanCommand = command.replaceFirst(" ", "-");
         	int page = 0;
         	String permission = "allow";
         	
@@ -424,10 +425,10 @@ public class MCDocsListener implements Listener {
 		for(String l : lines){
 			
 			//Basics
-			String fixedLine = l.replace("%name", player.getDisplayName());
-        	fixedLine = fixedLine.replace("%size", onlineCount());
-        	fixedLine = fixedLine.replace("%world", player.getWorld().getName());
-        	fixedLine = fixedLine.replace("%ip", player.getAddress().getAddress().getHostAddress());
+			String fixedLine = (player.getDisplayName() != null) ? l.replace("%name", player.getDisplayName()) : l;
+        	fixedLine = (onlineCount() != null) ? fixedLine.replace("%size", onlineCount()) : fixedLine;
+        	fixedLine = (player.getWorld().getName() != null) ? fixedLine.replace("%world", player.getWorld().getName()): fixedLine;
+        	fixedLine = (player.getAddress().getAddress().getHostAddress() != null) ? fixedLine.replace("%ip", player.getAddress().getAddress().getHostAddress()) : fixedLine;
         	
         	//Time Based
         	
@@ -470,20 +471,13 @@ public class MCDocsListener implements Listener {
     			}
     		}
     		fixedLine = fixedLine.replace("%group", groupInfo[0]);
-    		try{
-        		fixedLine = fixedLine.replace("%prefix", groupInfo[1]);
-        		fixedLine = fixedLine.replace("%suffix", groupInfo[2]);
-    		}
-    		catch (Exception e){
-    			fixedLine = fixedLine.replace("%prefix", "");
-        		fixedLine = fixedLine.replace("%suffix", "");
-    		}
-        	
+    		fixedLine = fixedLine.replace("%prefix", groupInfo[1]);
+    		fixedLine = fixedLine.replace("%suffix", groupInfo[2]);
         	
         	//iConomy
     		if(MCDocs.economyEnabled){
     			try{
-    				fixedLine = fixedLine.replace("%balance", Double.toString(MCDocs.economy.getBalance(player.toString())));
+    				fixedLine = fixedLine.replace("%balance", Double.toString(MCDocs.economy.getBalance(player.getName())));
     			}
     			catch(Exception e){
     				logit("Warning: Vault could not find " + player.getName() + "'s balance.");
@@ -493,7 +487,7 @@ public class MCDocsListener implements Listener {
             
             //More Basics
             fixedLine = locationSwap(player, fixedLine);
-        	fixedLine = fixedLine.replace("%online", onlineNames());
+        	fixedLine = (onlineNames() != null) ? fixedLine.replace("%online", onlineNames()) : fixedLine;
         	fixedLine = colourSwap(fixedLine);
         	fixedLine = fixedLine.replace("&#!", "&");
         	        	
@@ -583,25 +577,10 @@ public class MCDocsListener implements Listener {
 	
 	private String[] getGroupInfo(Player player){
 		
-		String group = "";
-		String prefix = "";
-		String suffix = "";
+		String group = (MCDocs.permission.getPrimaryGroup(player) != null) ? MCDocs.permission.getPrimaryGroup(player) : "";
+		String prefix = (MCDocs.chat.getPlayerPrefix(player) != null) ? MCDocs.chat.getPlayerPrefix(player) : "";
+		String suffix = (MCDocs.chat.getPlayerSuffix(player) != null) ? MCDocs.chat.getPlayerSuffix(player) : "";
 		
-		try{
-			group = MCDocs.permission.getPrimaryGroup(player);
-		}
-		catch(Exception e){
-			logit("Warning: Vault could not find " + player.getName() + "'s group.");
-		}
-		
-		try{
-			prefix = MCDocs.chat.getPlayerPrefix(player);
-			suffix = MCDocs.chat.getPlayerSuffix(player);
-		}
-		catch(Exception e){
-			logit("Warning: Vault could not find " + player.getName() + "'s prefix or suffix.");
-		}
-				
 		String[] ret = {group, prefix, suffix};
 		return ret;
 	}
@@ -760,10 +739,10 @@ public class MCDocsListener implements Listener {
 		
 		String[] groupInfo = getGroupInfo(player);
 		
-		string = string.replace("%name", player.getName());
-		string = string.replace("%size", onlineCount());
-		string = string.replace("%world", player.getWorld().getName());
-		string = string.replace("%ip", player.getAddress().getAddress().getHostAddress());    	
+		string = (player.getName() != null) ? string.replace("%name", player.getName()) : string;
+		string = (onlineCount() != null) ? string.replace("%size", onlineCount()) : string;
+		string = (player.getWorld().getName() != null) ? string.replace("%world", player.getWorld().getName()) : string;
+		string = (player.getAddress().getAddress().getHostAddress() != null) ? string.replace("%ip", player.getAddress().getAddress().getHostAddress()) : string;  	
 		string = string.replace("%group", groupInfo[0]);
 		string = string.replace("%prefix", groupInfo[1]);
 		string = string.replace("%suffix", groupInfo[2]);
@@ -804,7 +783,7 @@ public class MCDocsListener implements Listener {
         String nameFinal = null;
         for (Player o : online){
         	
-        	nameFinal = onlinePlayersFormat.replace("%name", o.getDisplayName());
+        	nameFinal = (o.getDisplayName() != null) ?onlinePlayersFormat.replace("%name", o.getDisplayName()) : nameFinal;
         	
     		String[] groupInfo = getGroupInfo(o);
     		nameFinal = nameFinal.replace("%group", groupInfo[0]);
@@ -903,17 +882,28 @@ public class MCDocsListener implements Listener {
     private String colourSwap(String line){
     	String[] Colours = { 	"&0", "&1", "&2", "&3", "&4", "&5", "&6", "&7",
 						        "&8", "&9", "&a", "&b", "&c", "&d", "&e", "&f",
+						        "[color=black]", "[color=darkblue]", "[color=darkgreen]", "[color=darkaqua]", "[color=darkred]", "[color=darkpurple]", "[color=gold]", "[color=gray]",
+						        "[color=darkgray]", "[color=blue]", "[color=green]", "[color=aqua]", "[color=red]", "[color=lightpurple]", "[color=yellow]", "[color=white]", "[/color]",
+						        "[b]", "[s]", "[u]", "[i]",
+						        "[/b]", "[/s]", "[/u]", "[/i]",
 						      };
     	ChatColor[] cCode = {	ChatColor.BLACK, ChatColor.DARK_BLUE, ChatColor.DARK_GREEN, ChatColor.DARK_AQUA, ChatColor.DARK_RED, ChatColor.DARK_PURPLE, ChatColor.GOLD, ChatColor.GRAY,
 						        ChatColor.DARK_GRAY, ChatColor.BLUE, ChatColor.GREEN, ChatColor.AQUA, ChatColor.RED, ChatColor.LIGHT_PURPLE, ChatColor.YELLOW, ChatColor.WHITE,
+						        ChatColor.BLACK, ChatColor.DARK_BLUE, ChatColor.DARK_GREEN, ChatColor.DARK_AQUA, ChatColor.DARK_RED, ChatColor.DARK_PURPLE, ChatColor.GOLD, ChatColor.GRAY,
+						        ChatColor.DARK_GRAY, ChatColor.BLUE, ChatColor.GREEN, ChatColor.AQUA, ChatColor.RED, ChatColor.LIGHT_PURPLE, ChatColor.YELLOW, ChatColor.WHITE, ChatColor.WHITE,
+						        ChatColor.BOLD, ChatColor.STRIKETHROUGH, ChatColor.UNDERLINE, ChatColor.ITALIC,
+						        ChatColor.RESET, ChatColor.RESET, ChatColor.RESET, ChatColor.RESET,
 						      };
     	
     	for (int x = 0; x < Colours.length; x++) {
-    		CharSequence cChk = null;
+    		CharSequence cChkU = null;
+    		CharSequence cChkL = null;
 
-            cChk = Colours[x];
-            if (line.contains(cChk)) {
-            	line = line.replace(cChk, cCode[x].toString());
+            cChkU = Colours[x].toUpperCase();
+            cChkL = Colours[x].toLowerCase();
+            if (line.contains(cChkU) || line.contains(cChkL)) {
+            	line = line.replace(cChkU, cCode[x].toString());
+            	line = line.replace(cChkL, cCode[x].toString());
             }
         }
         return line;
@@ -930,7 +920,7 @@ public class MCDocsListener implements Listener {
         		country = "Unknown"; 
         	}
         	
-        	line = line.replace("%country", country);        	
+        	line = (country != null) ? line.replace("%country", country) : line;        	
         }
     	
     	return line;
