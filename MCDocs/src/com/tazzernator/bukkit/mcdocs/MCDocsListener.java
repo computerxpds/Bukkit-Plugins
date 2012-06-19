@@ -577,9 +577,24 @@ public class MCDocsListener implements Listener {
 	
 	private String[] getGroupInfo(Player player){
 		
-		String group = (MCDocs.permission.getPrimaryGroup(player) != null) ? MCDocs.permission.getPrimaryGroup(player) : "";
-		String prefix = (MCDocs.chat.getPlayerPrefix(player) != null) ? MCDocs.chat.getPlayerPrefix(player) : "";
-		String suffix = (MCDocs.chat.getPlayerSuffix(player) != null) ? MCDocs.chat.getPlayerSuffix(player) : "";
+		String group = "";
+		String prefix = "";
+		String suffix = "";
+		
+		try{
+			group = MCDocs.permission.getPrimaryGroup(player);
+		}
+		catch(Exception e){
+			//nothing
+		}
+		
+		try{
+			prefix = MCDocs.chat.getPlayerPrefix(player);
+			suffix = MCDocs.chat.getPlayerSuffix(player);
+		}
+		catch(Exception e){
+			//nothing
+		}
 		
 		String[] ret = {group, prefix, suffix};
 		return ret;
