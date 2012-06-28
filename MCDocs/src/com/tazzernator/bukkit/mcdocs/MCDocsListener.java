@@ -354,7 +354,7 @@ public class MCDocsListener implements Listener {
         	fixedLines.clear();
         	String command = r.getCommand();
         	String cleanCommand = command.replaceFirst("/", "");
-        	cleanCommand = command.replaceFirst(" ", "-");
+        	cleanCommand = cleanCommand.replaceFirst(" ", "-");
         	int page = 0;
         	String permission = "allow";
         	
@@ -369,7 +369,7 @@ public class MCDocsListener implements Listener {
     			}
     			
     			//Bukkit Permissions
-				if(!MCDocs.permission.has(player, "mcdocs.*")){
+				if(!MCDocs.permission.has(player, "mcdocs.*") && !MCDocs.permission.has(player, "mcdocs.command.*")){
 					if((!MCDocs.permission.has(player, "mcdocs.command." + command)) && (!MCDocs.permission.has(player, "mcdocs.command." + cleanCommand))){
 						permission = "deny";
 					}
@@ -928,7 +928,7 @@ public class MCDocsListener implements Listener {
     	
     	if (this.plugin.getServer().getPluginManager().getPlugin("GeoIPTools") != null) {
         	Plugin GeoIPTools = this.plugin.getServer().getPluginManager().getPlugin("GeoIPTools");
-        	geoIP = ((GeoIPTools) GeoIPTools).getGeoIPLookup(GeoIPLookup.COUNTRYDATABASE);
+        	geoIP = ((GeoIPTools) GeoIPTools).getGeoIPLookup();
         	
         	String country = geoIP.getCountry(player.getAddress().getAddress()).getName();
         	if(country == "N/A"){
