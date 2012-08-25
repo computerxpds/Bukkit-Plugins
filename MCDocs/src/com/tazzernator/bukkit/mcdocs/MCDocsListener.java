@@ -91,7 +91,7 @@ public class MCDocsListener implements Listener {
 	
 	
 	/*
-	 * -- Configursation Methods --
+	 * -- Configuration Methods --
 	 * We check for config.yml, if it doesn't exists we create a default (defaultConfig), then we load (loadConfig). 
 	 */
 	
@@ -144,7 +144,7 @@ public class MCDocsListener implements Listener {
 				stream.println("            Moderator: 'help/moderator.txt'");
 				stream.println();
 				stream.println("#Show a MOTD at login? Yes: true | No: false");
-				stream.println("motd-enabled: true");
+				stream.println("motd-enabled: " + motdEnabled);
 				stream.println();
 				stream.println("#Here we determine which files are shown when a player joins the server.");
 				stream.println("motd:");
@@ -154,7 +154,7 @@ public class MCDocsListener implements Listener {
 				stream.println("        Moderator: 'motd-moderator.txt'");
 				stream.println();
 				stream.println("#Replace the vanilla join and quit messages? Yes: true | No: false");
-				stream.println("broadcast-enabled: true");
+				stream.println("broadcast-enabled: " + playerBroadcastMessageEnabled);
 				stream.println();
 				stream.println("#Here we determine what is announced to the server for each group on join and quit. ");
 				stream.println("#If you don't define a group it's own specific string, the default message is used.");	
@@ -168,25 +168,25 @@ public class MCDocsListener implements Listener {
 				stream.println("        Admin: '%prefix%group%suffix (%prefix%name%suffix) has left the server. You can relax.'");
 				stream.println();
 				stream.println("#This changes the pagination header that is added to MCDocs automatically when there is > 10 lines of text.");
-				stream.println("header-format: '[color=red][b]%commandname[/b][/color] | [color=yellow]Page %current of %count[/color] | [color=gray]%command <page>[/color]'");
+				stream.println("header-format: '" + headerFormat + "'");
 				stream.println();
 				stream.println("#Format to use when using %online or %online_group.");
-				stream.println("online-players-format: '%prefix%name'");
+				stream.println("online-players-format: '" + onlinePlayersFormat + "'");
 				stream.println();
 				stream.println("#The file to displayed when using %news.");
-				stream.println("news-file: 'news.txt'");
+				stream.println("news-file: '" + newsFile + "'");
 				stream.println();
 				stream.println("#How many lines to show when using %news.");
-				stream.println("news-lines: 1");
+				stream.println("news-lines: " + newsLines);
 				stream.println();
 				stream.println("#How long, in minutes, do you want online files to be cached locally? 0 = disable");
-				stream.println("cache-time: 5");
+				stream.println("cache-time: " + cacheTime);
 				stream.println();
 				stream.println("#Inform the console when a player uses a command from the commands list.");
-				stream.println("command-log-enabled: true");
+				stream.println("command-log-enabled: " + commandLogEnabled);
 				stream.println();
 				stream.println("#Send warnings and errors to the main server log? Yes: true | No: false");
-				stream.println("error-log-enabled: true");
+				stream.println("error-log-enabled: " + errorLogEnabled);
 				stream.close();
 				
 		} catch (FileNotFoundException e) {
@@ -421,7 +421,7 @@ public class MCDocsListener implements Listener {
 	
 	private void variableSwap(Player player, ArrayList<String> lines){
 			
-		//Swaping out some variables with their respective replacement.
+		//Swapping out some variables with their respective replacement.
 		for(String l : lines){
 			
 			//Basics
@@ -580,7 +580,6 @@ public class MCDocsListener implements Listener {
 		String group = "";
 		String prefix = "";
 		String suffix = "";
-		
 		try{
 			group = MCDocs.permission.getPrimaryGroup(player);
 		}
@@ -597,6 +596,7 @@ public class MCDocsListener implements Listener {
 		}
 		
 		String[] ret = {group, prefix, suffix};
+		
 		return ret;
 	}
 	
