@@ -135,6 +135,8 @@ public class MCDocsListener implements Listener {
 				stream.println("        file: 'news.txt'");
 				stream.println("    /register:");
 				stream.println("        file: 'register.txt'");
+				stream.println("    /server:");
+				stream.println("        file: 'server.txt'");
 				stream.println("    /about:");
 				stream.println("        file: 'http://tazzernator.com/files/bukkit/plugins/MCDocs/about.txt'");
 				stream.println("    /help:");
@@ -162,10 +164,14 @@ public class MCDocsListener implements Listener {
 				stream.println("    message: '%prefix%group%suffix (%prefix%name%suffix) has joined from %country.'");
 				stream.println("    groups:");
 				stream.println("        Admin: '%prefix%group%suffix (%prefix%name%suffix) has joined the server. Respect the admins.'");
+				stream.println("    players:");
+				stream.println("        Tazzernator: '%prefix%group%suffix (%prefix%name%suffix) has come to steal all your cute Ocelots!'");
 				stream.println("quit:");
 				stream.println("    message: '%prefix%group%suffix (%prefix%name%suffix) has left the server.'");
 				stream.println("    groups:");
 				stream.println("        Admin: '%prefix%group%suffix (%prefix%name%suffix) has left the server. You can relax.'");
+				stream.println("    players:");
+				stream.println("        Tazzernator: '%prefix%group%suffix (%prefix%name%suffix) has made away with all your cute Ocelots!'");
 				stream.println();
 				stream.println("#This changes the pagination header that is added to MCDocs automatically when there is > 10 lines of text.");
 				stream.println("header-format: '" + headerFormat + "'");
@@ -260,7 +266,7 @@ public class MCDocsListener implements Listener {
 				if(playerBroadcastMessageEnabled){
 					//Join Import
 					try{
-						MCDocsPlayerJoin joinRecord = new MCDocsPlayerJoin(map.get("join.message").toString(), "MCDocsGlobal");
+						MCDocsPlayerJoin joinRecord = new MCDocsPlayerJoin(map.get("join.message").toString(), "MCDocsGlobal", null);
 						joinList.add(joinRecord);
 					}
 					catch(Exception e){
@@ -268,13 +274,18 @@ public class MCDocsListener implements Listener {
 					}
 					if(key.startsWith("join.groups.")){
 						String[] split = key.split("\\.");
-						MCDocsPlayerJoin joinGroupRecord = new MCDocsPlayerJoin(map.get(key).toString(), split[2].toString());
+						MCDocsPlayerJoin joinGroupRecord = new MCDocsPlayerJoin(map.get(key).toString(), split[2].toString(), null);
 						joinList.add(joinGroupRecord);
-					}					
+					}
+					if(key.startsWith("join.players.")){
+						String[] split = key.split("\\.");
+						MCDocsPlayerJoin joinNameRecord = new MCDocsPlayerJoin(map.get(key).toString(), null, split[2].toString());
+						joinList.add(joinNameRecord);
+					}
 					
 					//Quit Import
 					try{
-						MCDocsPlayerQuit quitRecord = new MCDocsPlayerQuit(map.get("quit.message").toString(), "MCDocsGlobal");
+						MCDocsPlayerQuit quitRecord = new MCDocsPlayerQuit(map.get("quit.message").toString(), "MCDocsGlobal", null);
 						quitList.add(quitRecord);
 					}
 					catch(Exception e){
@@ -282,9 +293,14 @@ public class MCDocsListener implements Listener {
 					}
 					if(key.startsWith("quit.groups.")){
 						String[] split = key.split("\\.");
-						MCDocsPlayerQuit quitGroupRecord = new MCDocsPlayerQuit(map.get(key).toString(), split[2].toString());
+						MCDocsPlayerQuit quitGroupRecord = new MCDocsPlayerQuit(map.get(key).toString(), split[2].toString(), null);
 						quitList.add(quitGroupRecord);
-					}	
+					}
+					if(key.startsWith("quit.players.")){
+						String[] split = key.split("\\.");
+						MCDocsPlayerQuit quitNameRecord = new MCDocsPlayerQuit(map.get(key).toString(), null, split[2].toString());
+						quitList.add(quitNameRecord);
+					}
 				}
 			}
 		}
@@ -385,7 +401,7 @@ public class MCDocsListener implements Listener {
 
         			
         			//Online file use
-        			if(fileName.contains("http")){
+        			if(fileName.startsWith("http")){
         				ArrayList<String> onlineLines = new ArrayList<String>();
         				onlineLines = onlineFile(fileName);
         				for(String o : onlineLines){
@@ -425,10 +441,7 @@ public class MCDocsListener implements Listener {
 		for(String l : lines){
 			
 			//Basics
-			String fixedLine = (player.getDisplayName() != null) ? l.replace("%name", player.getDisplayName()) : l;
-        	fixedLine = (onlineCount() != null) ? fixedLine.replace("%size", onlineCount()) : fixedLine;
-        	fixedLine = (player.getWorld().getName() != null) ? fixedLine.replace("%world", player.getWorld().getName()): fixedLine;
-        	fixedLine = (player.getAddress().getAddress().getHostAddress() != null) ? fixedLine.replace("%ip", player.getAddress().getAddress().getHostAddress()) : fixedLine;
+			String fixedLine = basicVariableSwap(player, l);
         	
         	//Time Based
         	
@@ -458,7 +471,6 @@ public class MCDocsListener implements Listener {
         	fixedLine = fixedLine.replace("%time", worldTimeResult);
         	
         	//Permissions related variables
-    		String[] groupInfo = getGroupInfo(player);
     		if(fixedLine.contains("%online_")){
     			String tempString = fixedLine.trim();
     			String[] firstSplit = tempString.split(" ");
@@ -470,9 +482,6 @@ public class MCDocsListener implements Listener {
     				}
     			}
     		}
-    		fixedLine = fixedLine.replace("%group", groupInfo[0]);
-    		fixedLine = fixedLine.replace("%prefix", groupInfo[1]);
-    		fixedLine = fixedLine.replace("%suffix", groupInfo[2]);
         	
         	//iConomy
     		if(MCDocs.economyEnabled){
@@ -482,16 +491,14 @@ public class MCDocsListener implements Listener {
     			catch(Exception e){
     				logit("Warning: Vault could not find " + player.getName() + "'s balance.");
     			}
-    		}
-                        
+    		}   
             
             //More Basics
-            fixedLine = locationSwap(player, fixedLine);
         	fixedLine = (onlineNames() != null) ? fixedLine.replace("%online", onlineNames()) : fixedLine;
         	fixedLine = colourSwap(fixedLine);
         	fixedLine = fixedLine.replace("&#!", "&");
         	        	
-        	//If the line currently in the for loop has "%include", we find out which file to load in by splitting the line up intesively.
+        	//If the line currently in the for loop has "%include", we find out which file to load in by splitting the line up intensively.
         	ArrayList<String> files = new ArrayList<String>();
         	       	
 			if (l.contains("%include") || l.contains("%news")){
@@ -559,7 +566,7 @@ public class MCDocsListener implements Listener {
             
             player.sendMessage(header);
         }
-        //Some Maths.
+        //Some math, magic, and wizards.
         int highNum = (page * 9);
         int lowNum = (page - 1) * 9;
         for (int number = lowNum; number < highNum; number++){
@@ -580,29 +587,24 @@ public class MCDocsListener implements Listener {
 		String group = "";
 		String prefix = "";
 		String suffix = "";
-		try{
-			group = MCDocs.permission.getPrimaryGroup(player);
-		}
-		catch(Exception e){
-			//nothing
-		}
 		
-		try{
-			prefix = MCDocs.chat.getPlayerPrefix(player);
-			suffix = MCDocs.chat.getPlayerSuffix(player);
-		}
-		catch(Exception e){
-			//nothing
-		}
+		//Relying on Vault isn't always that great.
+		try{group = MCDocs.permission.getPrimaryGroup(player);}catch(Exception e){}
+		try{prefix = MCDocs.chat.getPlayerPrefix(player);}catch(Exception e){}
+		try{suffix = MCDocs.chat.getPlayerSuffix(player);}catch(Exception e){}
+		
+		//Seriously. Can't rely on it.
+		group = (group != null) ? group : "";
+		prefix = (prefix != null) ? prefix : "";
+		suffix = (suffix != null) ? suffix : "";
 		
 		String[] ret = {group, prefix, suffix};
-		
 		return ret;
 	}
 	
 	private ArrayList<String> onlineFile(String url){
 		
-		//some variables for the method
+		//Some variables for the method
 		MCDocsOnlineFiles file = null;
 		ArrayList<String> onlineLines = new ArrayList<String>();
 		
@@ -747,7 +749,7 @@ public class MCDocsListener implements Listener {
 	 * onlineCount: Returns the current amount of users online.
 	 * newsLine: Is used to insert the most recent lines (# defined in config.yml) from the defined news file (defined in the config.yml)
 	 * checkIfNumber: simple try catch to determine if a space is in a command. Example: /help iconomy 2
-	 * colorSwap: Uses the API to color swap instead of manually doing it.
+	 * colorSwap: Uses the API to colour swap instead of manually doing it.
 	 */
 	
 	private String basicVariableSwap(Player player, String string){
@@ -755,6 +757,7 @@ public class MCDocsListener implements Listener {
 		String[] groupInfo = getGroupInfo(player);
 		
 		string = (player.getName() != null) ? string.replace("%name", player.getName()) : string;
+		string = (player.getName() != null) ? string.replace("%displayname", player.getDisplayName()) : string;
 		string = (onlineCount() != null) ? string.replace("%size", onlineCount()) : string;
 		string = (player.getWorld().getName() != null) ? string.replace("%world", player.getWorld().getName()) : string;
 		string = (player.getAddress().getAddress().getHostAddress() != null) ? string.replace("%ip", player.getAddress().getAddress().getHostAddress()) : string;  	
@@ -762,6 +765,11 @@ public class MCDocsListener implements Listener {
 		string = string.replace("%prefix", groupInfo[1]);
 		string = string.replace("%suffix", groupInfo[2]);
 		string = locationSwap(player, string);
+		string = (this.plugin.getServer().getBukkitVersion() != null) ? string.replace("%server_version", this.plugin.getServer().getBukkitVersion()) : string;
+		string = (this.plugin.getServer().getIp() != null) ? string.replace("%server_ip", this.plugin.getServer().getIp()) : string;
+		string = (Integer.toString(this.plugin.getServer().getPort()) != null) ? string.replace("%server_port", Integer.toString(this.plugin.getServer().getPort())) : string;
+		string = (Integer.toString(this.plugin.getServer().getMaxPlayers()) != null) ? string.replace("%server_max", Integer.toString(this.plugin.getServer().getMaxPlayers())) : string;
+		string = (this.plugin.getServer().getServerName() != null) ? string.replace("%server_name", this.plugin.getServer().getServerName()) : string;		
 		
 		return string;
 	}
@@ -773,7 +781,7 @@ public class MCDocsListener implements Listener {
 		//Ok, let's import our new file, and then send them into another variableSwap [ I   N   C   E   P   T   I   O   N ]
 		try {
 			//Online file use
-			if(fileName.contains("http")){
+			if(fileName.startsWith("http")){
 				ArrayList<String> onlineLines = new ArrayList<String>();
 				onlineLines = onlineFile(fileName);
 				for(String o : onlineLines){
@@ -884,10 +892,9 @@ public class MCDocsListener implements Listener {
     private boolean checkIfNumber(String in) {
         
         try {
-
-            Integer.parseInt(in);
-        
-        } catch (NumberFormatException ex) {
+        	Integer.parseInt(in);
+        }
+        catch (NumberFormatException ex) {
             return false;
         }
         
@@ -944,7 +951,7 @@ public class MCDocsListener implements Listener {
     
     /*
 	 * -- On Player Join // Quit -- 
-	 * Message of the day, and server anouncements for player join and quit.
+	 * Message of the day, and server announcements for player join and quit.
 	 */
 	
     @EventHandler
@@ -960,6 +967,13 @@ public class MCDocsListener implements Listener {
 			
 			for(MCDocsPlayerJoin j : joinList){
 				if(group[0].equalsIgnoreCase(j.getGroup())){
+					message = j.getMessage();
+				}
+			}
+			
+			//Iterate the players last, as to prioritise over groups.
+			for(MCDocsPlayerJoin j : joinList){
+				if(player.getName().equalsIgnoreCase(j.getPlayerName())){
 					message = j.getMessage();
 				}
 			}
@@ -985,6 +999,13 @@ public class MCDocsListener implements Listener {
 			
 			for(MCDocsPlayerQuit q : quitList){
 				if(group[0].equalsIgnoreCase(q.getGroup())){
+					message = q.getMessage();
+				}
+			}
+			
+			//Iterate the players last, as to prioritise over groups.
+			for(MCDocsPlayerQuit q : quitList){
+				if(player.getName().equalsIgnoreCase(q.getPlayerName())){
 					message = q.getMessage();
 				}
 			}
@@ -1020,7 +1041,7 @@ public class MCDocsListener implements Listener {
 		fileName = basicVariableSwap(player, fileName);
 		
 		//Online file use
-    	if(fileName.contains("http")){
+    	if(fileName.startsWith("http")){
 			ArrayList<String> onlineLines = new ArrayList<String>();
 			onlineLines = onlineFile(fileName);
 			for(String o : onlineLines){

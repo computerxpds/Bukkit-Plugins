@@ -22,10 +22,12 @@ public class MCDocsPlayerQuit {
 	
 	protected String message;
 	protected String group;
+	protected String playerName;
 	
-	public MCDocsPlayerQuit(String message, String group){
-		this.message = message;
-		this.group = group;
+	public MCDocsPlayerQuit(String message, String group, String playerName){
+		this.message = (message != null) ? message : "";
+		this.group = (group != null) ? group : "";
+		this.playerName = (playerName != null) ? playerName : "";
 	}
 	
 	public String getMessage(){
@@ -34,5 +36,9 @@ public class MCDocsPlayerQuit {
 	
 	public String getGroup(){
 		return group;
+	}
+	
+	public String getPlayerName(){
+		return playerName;
 	}
 }
